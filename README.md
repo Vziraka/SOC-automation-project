@@ -1,98 +1,78 @@
-# 🛡️ SOC Automation Project – Splunk, n8n, ChatGPT & Slack
+# 🛡️ SOC Automation Project — Splunk, n8n, ChatGPT & Slack
 
-## 📌 Project Overview
-This project demonstrates a **SOC automation pipeline** that detects suspicious Windows login activity, enriches alerts with threat intelligence, summarizes them using AI, and delivers actionable notifications to Slack.
+## 📌 Overview
+This project builds a small **SOC-style automation pipeline** that detects suspicious Windows authentication activity in **Splunk**, triggers an automated workflow in **n8n**, enriches indicators with **AbuseIPDB**, summarizes findings with **ChatGPT**, and posts a structured alert to **Slack**.
 
-## 🧠 What This Project Does
-- Ingests Windows Security logs into **Splunk**
-- Detects failed login attempts (**Event ID 4625**)
-- Triggers alerts via **Splunk Webhooks**
-- Automates handling with **n8n**
-- Uses **ChatGPT** for alert summarization and severity assessment
-- Enriches IPs using **AbuseIPDB**
-- Sends structured alerts to **Slack**
+## 🎯 What it does
+- Collects Windows Security logs in Splunk (via Universal Forwarder)
+- Detects repeated failed login attempts (**Event ID 4625**)
+- Triggers a **Splunk alert → Webhook** to n8n
+- n8n workflow:
+  - Enriches source IP with **AbuseIPDB**
+  - Uses **ChatGPT** to summarize, assess severity, and recommend next steps
+  - Sends a formatted alert to **Slack**
 
-## 🧰 Technologies Used
+## 🧰 Tech stack
 - Splunk Enterprise (SIEM)
-- Splunk Universal Forwarder
-- n8n (Dockerized)
-- Docker & Docker Compose
-- ChatGPT API
-- AbuseIPDB API
-- Slack API
-- VMware
-- Windows 10, Ubuntu, Kali Linux
+- Splunk Universal Forwarder (Windows log ingestion)
+- n8n (Docker / Docker Compose)
+- OpenAI (ChatGPT) node in n8n
+- AbuseIPDB API (IP reputation enrichment)
+- Slack API (alert delivery)
+- VMware VMs (Windows 10 + Ubuntu)
 
-## 🏗️ Lab Environment
-| Machine | Purpose |
-|---|---|
-| Windows 10 VM | Log generation |
-| Ubuntu VM | Splunk Enterprise |
-| Ubuntu VM | n8n Automation |
-| Kali Linux | Security testing |
-| Host | Management & SSH |
-
-## 🔄 Architecture Flow
+## 🏗️ Architecture
 ```
-Windows Logs → Splunk → Alert (4625) → Webhook → n8n
-   ├─ ChatGPT (Summary & Severity)
-   ├─ AbuseIPDB (IP Enrichment)
-   ↓
- Slack Alerts
+Windows 10 (Security logs)
+        ↓ (Universal Forwarder)
+Splunk Enterprise (index + alert)
+        ↓ (Webhook action)
+n8n workflow
+  ├─ AbuseIPDB enrichment (HTTP Request)
+  ├─ ChatGPT analysis (summary / severity / actions)
+  └─ Slack message (alert channel)
 ```
 
-## ⚙️ Setup Summary
-### Splunk
-- Enabled receiving on port **9997**
-- Installed Windows Add-on
-- Created alert for failed logins:
+## 🔍 Splunk detection
+Example detection used in this project:
 ```spl
 index="mydfir-project" EventCode=4625
 | stats count by _time, ComputerName, user, src_ip
 ```
 
-### n8n
-- Deployed via Docker Compose
-- Webhook listener → ChatGPT → AbuseIPDB → Slack
+## 📸 Screenshots (selected)
+### 1) Splunk search showing EventCode=4625 events
+![Splunk search (4625)](screenshots/splunk_4625_search.png)
 
-## 🤖 AI Alert Analysis
-ChatGPT acts as a Tier 1 SOC assistant to:
-- Summarize alerts
-- Map to MITRE ATT&CK concepts
-- Assign severity
-- Recommend next actions
+### 2) Splunk stats view for alert-ready fields (user, host, src_ip)
+![Splunk stats](screenshots/splunk_4625_stats.png)
 
-## 🌐 Threat Intelligence
-- IP enrichment using **AbuseIPDB**
-- Results passed to AI for context-aware analysis
+### 3) n8n workflow overview (Webhook → ChatGPT → Slack + AbuseIPDB tool)
+![n8n workflow](screenshots/n8n_workflow_overview.png)
 
-## 📣 Slack Integration
-- Slack App with OAuth scopes
-- Alerts delivered to a dedicated channel
+### 4) AbuseIPDB enrichment output
+![AbuseIPDB enrichment](screenshots/n8n_abuseipdb_enrichment.png)
 
-## 📸 Screenshots
-> Place images in `/screenshots` and update filenames below.
+### 5) ChatGPT output (SOC-style summary, severity, recommended actions)
+![ChatGPT output](screenshots/n8n_chatgpt_output.png)
 
-### Splunk Failed Login Alert
-![Splunk Alert](screenshots/splunk_failed_login_alert.png)
+### 6) Final alert delivered to Slack
+![Slack alert](screenshots/slack_alert_output.png)
 
-### n8n Automation Workflow
-![n8n Workflow](screenshots/n8n_soc_workflow.png)
+## ✅ Skills demonstrated
+- SIEM alerting & log analysis (Splunk)
+- Windows security telemetry ingestion
+- Webhook-based alert forwarding
+- SOAR-style automation with n8n
+- Threat intel enrichment (AbuseIPDB)
+- AI-assisted Tier 1 triage summaries
+- Slack alerting & API integration
 
-### Slack Alert Output
-![Slack Alert](screenshots/slack_alert_output.png)
-
-## 🎯 Skills Demonstrated
-- SIEM alerting
-- Security automation
-- API integrations
-- Threat intel enrichment
-- SOC workflow design
-
-## 🚀 Future Improvements
-- Add VirusTotal enrichment
-- Severity-based routing
-- Automated containment actions
+## 🚀 Future improvements
+- Add additional detections (e.g., 4624 anomalies, privilege escalation, suspicious processes)
+- Add more enrichment sources (VirusTotal, Shodan, etc.)
+- Severity-based routing (different Slack channels / paging)
+- Automatic containment actions (disable account, firewall block) in a safe lab environment
 
 ## 👤 Author
 **Ensizziyo Ziraka**
